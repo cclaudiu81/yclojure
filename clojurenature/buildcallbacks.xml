@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+ [y] hybris Platform
+
+ Copyright (c) 2017 SAP SE or an SAP affiliate company.  All rights reserved.
+
+ This software is the confidential and proprietary information of SAP
+ ("Confidential Information"). You shall not disclose such Confidential
+ Information and shall use it only in accordance with the terms of the
+ license agreement you entered into with SAP.
+--><!--
+ All hybris buildcallbacks.xml macrodefinitions:
+ 
+ Build/Documentation
+ 
+	 before/after ant macro "clean"
+		 <macrodef name="clojurenature_before_clean"/>
+		 <macrodef name="clojurenature_after_clean"/>
+	 
+	 before/after ant macro "build"
+		 <macrodef name="clojurenature_before_build"/>
+		 <macrodef name="clojurenature_after_build"/>
+		 
+	 before/after ant macro "compile_core" - the core module of the extension
+		 <macrodef name="clojurenature_before_compile_core">
+		 <macrodef name="clojurenature_after_compile_core">
+	 
+	 before/after ant macro "compile_web" - the web module of the extension
+		 <macrodef name="clojurenature_before_compile_web" />
+		 <macrodef name="clojurenature_after_compile_web" />
+	 
+	 before/after ant macro "compile_hmc" - the hmc module of the extension
+		 <macrodef name="clojurenature_before_compile_hmc" />
+		 <macrodef name="clojurenature_after_compile_hmc" />
+ 
+ Preparing extension
+ 
+	 will be called in the beginning of the ant call and only once (also when using multiple 
+	 ant targets e.g. ant build yunittest)	
+		 <macrodef name="clojurenature_only_once_prepare"/>
+ 
+ Creating ear module/production
+ 
+	 before/after ant macro "ear"
+		 <macrodef name="clojurenature_before_ear"/>
+		 <macrodef name="clojurenature_after_ear"/>
+
+	 before/after ant macro "production" - for hybris server only
+		 <macrodef name="clojurenature_before_production" />
+		 <macrodef name="clojurenature_after_production" />
+ 
+ JUnit Test
+ 
+	 before/after ant macro "yunitinit" 
+		 <macrodef name="clojurenature_before_yunitinit" />
+		 <macrodef name="clojurenature_after_yunitinit" />
+	 
+	 before/after ant macro "yunit"
+		 <macrodef name="clojurenature_before_yunit" />
+		 <macrodef name="clojurenature_after_yunit" /> 
+		 
+ Distribution package
+ 
+ 	 before/after ant macro "dist" - internal target; only for use when platform is available in source code
+		 <macrodef name="clojurenature_after_dist"/>
+		 <macrodef name="clojurenature_before_dist"/>
+	 
+	 before/after ant macro "dist_copy" - internal target; only for use when platform is available in source code
+		 <macrodef name="clojurenature_before_dist_copy"/>
+		 <macrodef name="clojurenature_after_dist_copy"/>
+		  
+ 	 With these filters you can override the default extension filters defined in platform/resources/ant/dist/filtersets.xml
+ 	  	 <patternset id="extension.clojurenature.binary.filter">
+ 	  	  	 <patternset refid="extension.filter" />
+ 	  	  	 <exclude name="**/*-source.jar" />
+ 	  	 </patternset>
+ 	  	 <patternset id="extension.clojurenature.source.filter">
+ 	  	  	 <exclude name="**/bin/**" />
+ 	  	 </patternset>
+     With this filter you can decide what should be excluded from development zip.
+ 	  	 <patternset id="extension.clojurenature.devzip.filter">
+ 	  	 Include all files from extension.source.filter.
+ 	  	     <patternset refid="extension.source.filter" />
+         Exclude unwanted files.
+ 	  	  	 <exclude name="lib/exclude-me.jar" />
+ 	  	 </patternset>
+ 
+--><project name="clojurenature_buildcallbacks">
+
+	<macrodef name="clojurenature_compile_core">
+		<attribute name="extname"/>
+		<sequential>
+			<if>
+				<isset property="ext.@{extname}.coremodule.available"/>
+				<then>
+					<if>
+						<istrue value="${ext.@{extname}.extension.coremodule.sourceavailable}"/>
+						<then>
+							<java failonerror="true" fork="true" classname="clojure.lang.Compile">
+								<classpath>
+									<pathelement path="${ext.@{extname}.path}/classes"/>
+									<pathelement location="${ext.clojurenature.path}/lib/clojure-1.8.0.jar" />
+									<pathelement path="${build.classpath}"/>
+									<pathelement path="${platformhome}/bootstrap/bin/models.jar" />
+									<fileset dir="${bundled.tomcat.home}">
+										<include name="lib/jsp-api.jar"/>
+										<include name="lib/servlet-api.jar"/>
+										<include name="lib/el-api.jar"/>
+										<include name="lib/wrapper*.jar"/>
+									</fileset>
+									<pathelement path="${ext.@{extname}.path}/cljsrc" />
+									<pathelement path="${ext.@{extname}.classpath}" />
+								</classpath>
+
+								<jvmarg value="-Dclojure.compile.path=${ext.@{extname}.path}/classes" />
+								<arg value="@{extname}.core" />
+							</java>
+						</then>
+					</if>
+				</then>
+			</if>
+		</sequential>
+	</macrodef>
+
+	<macrodef name="clojurenature_compile_web">
+		<attribute name="extname"/>
+		<sequential>
+			<if>
+				<isset property="ext.@{extname}.webmodule.available"/>
+				<then>
+					<if>
+					<istrue value="${ext.@{extname}.extension.webmodule.sourceavailable}"/>
+					<then>
+						<java failonerror="true" fork="true" classname="clojure.lang.Compile">
+							<classpath>
+								<pathelement path="${ext.@{extname}.path}/classes"/>
+								<pathelement location="${ext.clojurenature.path}/lib/clojure-1.8.0.jar" />
+								<pathelement path="${build.classpath}"/>
+								<pathelement path="${platformhome}/bootstrap/bin/models.jar" />
+								<fileset dir="${bundled.tomcat.home}">
+									<include name="lib/jsp-api.jar"/>
+									<include name="lib/servlet-api.jar"/>
+									<include name="lib/el-api.jar"/>
+									<include name="lib/wrapper*.jar"/>
+								</fileset>
+								<pathelement path="${ext.@{extname}.path}/cljsrc" />
+								<pathelement path="${ext.@{extname}.classpath}" />
+							</classpath>
+
+							<jvmarg value="-Dclojure.compile.path=${ext.@{extname}.path}/web/webroot/WEB-INF/classes" />
+							<arg value="@{extname}.core" />
+					</java>
+					</then>
+					</if>
+				</then>
+			</if>
+		</sequential>
+	</macrodef>
+
+</project>
